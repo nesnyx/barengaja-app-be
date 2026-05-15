@@ -1,35 +1,32 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Server } from 'colyseus';
-import { createServer } from 'http';
 import { WebSocketTransport } from '@colyseus/ws-transport';
-
 import { GameRoom } from './player/game-room';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  await app.init();
   app.enableCors({
-    origin: "http://localhost:5173", // Izinkan origin dari Vite kamu
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    origin: 'http://localhost:5173',
     credentials: true,
   });
-  const httpServer = createServer(
-    app.getHttpAdapter().getInstance(),
-  );
 
+
+  await app.init();
+
+  const httpServer = app.getHttpServer();
   const gameServer = new Server({
     transport: new WebSocketTransport({
       server: httpServer,
     }),
   });
 
-  gameServer.define('my_room', GameRoom);
+  gameServer.define("my_room", GameRoom)
 
-  httpServer.listen(2567);
+  await app.listen(2567)
 
-  console.log('Game Server is running on ws://localhost:2567');
+  console.log('🚀 Server running at http://localhost:2567');
 }
 
 bootstrap();
