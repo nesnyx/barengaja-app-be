@@ -24,7 +24,7 @@ async function bootstrap() {
 
   gameServer.define("my_room", GameRoom)
 
-  await app.listen(2567)
+  gameServer.listen(2567)
 
   console.log('🚀 Server running at http://localhost:2567');
 }
