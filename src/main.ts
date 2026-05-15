@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Server } from 'colyseus';
+import { Server, defineServer, defineRoom, matchMaker } from 'colyseus';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { GameRoom } from './player/game-room';
 
