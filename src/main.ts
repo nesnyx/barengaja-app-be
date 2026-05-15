@@ -1,8 +1,31 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { Server } from 'colyseus';
+import { createServer } from 'http';
+import { WebSocketTransport } from '@colyseus/ws-transport';
+
+import { GameRoom } from './player/game-room';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3000);
+
+  await app.init();
+
+  const httpServer = createServer(
+    app.getHttpAdapter().getInstance(),
+  );
+
+  const gameServer = new Server({
+    transport: new WebSocketTransport({
+      server: httpServer,
+    }),
+  });
+
+  gameServer.define('my_room', GameRoom);
+
+  httpServer.listen(2567);
+
+  console.log('Game Server is running on ws://localhost:2567');
 }
+
 bootstrap();
