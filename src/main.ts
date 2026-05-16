@@ -22,7 +22,7 @@ async function bootstrap() {
     }),
   });
 
-  gameServer.define("my_room", GameRoom)
+  gameServer.define("game", GameRoom)
 
   gameServer.listen(2567)
 
