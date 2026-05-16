@@ -1,34 +1,33 @@
 import { Room, Client } from "colyseus";
 import { MyRoomState, PlayerState } from "./schemas/player.schema";
 
-export class GameRoom extends Room<MyRoomState | any> {
-    maxClients = 20;
+export class GameRoom extends Room {
+    maxClients = 4;
+    state = new MyRoomState()
+
+    messages = {
+        setPlayer: (client: Client, character: string) => {
+            const player = this.state.players.get(client.sessionId)
+            if (player) {
+                player.character = character
+            }
+        }
+    }
 
     onCreate(options: any) {
-        this.setState(new MyRoomState());
-        // Menangani pesan "move" dari Phaser
-        this.onMessage("move", (client, data) => {
-            const player = this.state.players.get(client.sessionId);
-            if (!player) return;
-
-            const speed = 5; // Samakan atau sesuaikan dengan speed di client
-
-            if (data.left) player.x -= speed;
-            if (data.right) player.x += speed;
-            if (data.up) player.y -= speed;
-            if (data.down) player.y += speed;
-        });
+        console.log("GameRoom created!");
     }
+
 
     onJoin(client: Client, options: any) {
         console.log(client.sessionId, "bergabung!");
-
-        // Tambahkan player baru ke state
         const newPlayer = new PlayerState();
+        newPlayer.sessionId = client.sessionId
         newPlayer.x = Math.random() * 800;
         newPlayer.y = Math.random() * 600;
 
         this.state.players.set(client.sessionId, newPlayer);
+
     }
 
     onLeave(client: Client | any, consented: boolean | any) {

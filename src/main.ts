@@ -1,32 +1,66 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Server, defineServer, defineRoom, matchMaker } from 'colyseus';
+import {
+  defineServer,
+  defineRoom,
+  monitor,
+  playground,
+  createRouter,
+  createEndpoint,
+  Server
+} from "colyseus";
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { GameRoom } from './player/game-room';
-
+import { listen } from "@colyseus/tools";
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const server = defineServer({
+    /**
+     * Define your room handlers:
+     */
+    rooms: {
+      game: defineRoom(GameRoom)
+    },
 
-  app.enableCors({
-    origin: 'http://localhost:5173',
-    credentials: true,
-  });
-
-
-  await app.init();
-
-  const httpServer = app.getHttpServer();
-  const gameServer = new Server({
-    transport: new WebSocketTransport({
-      server: httpServer,
+    /**
+     * Experimental: Define API routes. Built-in integration with the "playground" and SDK.
+     * 
+     * Usage from SDK: 
+     *   client.http.get("/api/hello").then((response) => {})
+     * 
+     */
+    routes: createRouter({
+      api_hello: createEndpoint("/api/hello", { method: "GET", }, async (ctx) => {
+        return { message: "Hello World" }
+      })
     }),
+
+    /**
+     * Bind your custom express routes here:
+     * Read more: https://expressjs.com/en/starter/basic-routing.html
+     */
+    express: (app) => {
+      app.get("/hi", (req, res) => {
+        res.send("It's time to kick ass and chew bubblegum!");
+      });
+
+      /**
+       * Use @colyseus/monitor
+       * It is recommended to protect this route with a password
+       * Read more: https://docs.colyseus.io/tools/monitoring/#restrict-access-to-the-panel-using-a-password
+       */
+      app.use("/monitor", monitor());
+
+      /**
+       * Use @colyseus/playground
+       * (It is not recommended to expose this route in a production environment)
+       */
+      if (process.env.NODE_ENV !== "production") {
+        app.use("/", playground());
+      }
+    }
+
   });
-
-  gameServer.define("game", GameRoom)
-
-  gameServer.listen(2567)
-
-  console.log('🚀 Server running at http://localhost:2567');
+  listen(server)
 }
 
 bootstrap();
